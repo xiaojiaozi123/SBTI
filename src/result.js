@@ -1,5 +1,6 @@
 import { drawRadar } from './chart.js'
 import { generateShareImage } from './share.js'
+import { getCoffeeRecommendation } from './coffee.js'
 
 const LEVEL_LABEL = { L: '低', M: '中', H: '高' }
 const LEVEL_CLASS = { L: 'level-low', M: 'level-mid', H: 'level-high' }
@@ -9,6 +10,7 @@ const LEVEL_CLASS = { L: 'level-low', M: 'level-mid', H: 'level-high' }
  */
 export function renderResult(result, userLevels, dimOrder, dimDefs, config) {
   const { primary, secondary, rankings, mode } = result
+  const coffee = getCoffeeRecommendation(primary.code)
 
   // Kicker
   const kicker = document.getElementById('result-kicker')
@@ -27,6 +29,8 @@ export function renderResult(result, userLevels, dimOrder, dimDefs, config) {
   // Intro & 描述
   document.getElementById('result-intro').textContent = primary.intro || ''
   document.getElementById('result-desc').textContent = primary.desc || ''
+  document.getElementById('coffee-name').textContent = coffee.name
+  document.getElementById('coffee-reason').textContent = coffee.reason
 
   // 次要匹配
   const secEl = document.getElementById('result-secondary')
@@ -52,13 +56,24 @@ export function renderResult(result, userLevels, dimOrder, dimDefs, config) {
 
     const row = document.createElement('div')
     row.className = 'dim-row'
-    row.innerHTML = `
-      <div class="dim-header">
-        <span class="dim-name">${def.name}</span>
-        <span class="dim-level ${LEVEL_CLASS[level]}">${LEVEL_LABEL[level]}</span>
-      </div>
-      <div class="dim-desc">${def.levels[level]}</div>
-    `
+    const header = document.createElement('div')
+    header.className = 'dim-header'
+
+    const name = document.createElement('span')
+    name.className = 'dim-name'
+    name.textContent = def.name
+
+    const badge = document.createElement('span')
+    badge.className = `dim-level ${LEVEL_CLASS[level]}`
+    badge.textContent = LEVEL_LABEL[level]
+
+    header.append(name, badge)
+
+    const desc = document.createElement('div')
+    desc.className = 'dim-desc'
+    desc.textContent = def.levels[level]
+
+    row.append(header, desc)
     detailEl.appendChild(row)
   }
 
@@ -69,12 +84,23 @@ export function renderResult(result, userLevels, dimOrder, dimDefs, config) {
   top5.forEach((t, i) => {
     const item = document.createElement('div')
     item.className = 'top-item'
-    item.innerHTML = `
-      <span class="top-rank">#${i + 1}</span>
-      <span class="top-code">${t.code}</span>
-      <span class="top-name">${t.cn}</span>
-      <span class="top-sim">${t.similarity}%</span>
-    `
+    const rank = document.createElement('span')
+    rank.className = 'top-rank'
+    rank.textContent = `#${i + 1}`
+
+    const code = document.createElement('span')
+    code.className = 'top-code'
+    code.textContent = t.code
+
+    const name = document.createElement('span')
+    name.className = 'top-name'
+    name.textContent = t.cn
+
+    const sim = document.createElement('span')
+    sim.className = 'top-sim'
+    sim.textContent = `${t.similarity}%`
+
+    item.append(rank, code, name, sim)
     topEl.appendChild(item)
   })
 
@@ -86,15 +112,5 @@ export function renderResult(result, userLevels, dimOrder, dimDefs, config) {
   const btnDownload = document.getElementById('btn-download')
   btnDownload.onclick = () => {
     generateShareImage(primary, userLevels, dimOrder, dimDefs, mode)
-  }
-
-  // 复制 AI Agent 命令
-  const btnAgent = document.getElementById('btn-agent')
-  btnAgent.onclick = () => {
-    const cmd = `git clone https://github.com/pingfanfan/SBTI.git && cd SBTI && npm install && npm run dev`
-    navigator.clipboard.writeText(cmd).then(() => {
-      btnAgent.textContent = '已复制!'
-      setTimeout(() => { btnAgent.textContent = '复制一键部署命令' }, 2000)
-    })
   }
 }
