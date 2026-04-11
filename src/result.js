@@ -1,6 +1,7 @@
 import { drawRadar } from './chart.js'
 import { generateShareImage } from './share.js'
 import { getCoffeeRecommendation } from './coffee.js'
+import { getPersonaVisual } from './personaVisuals.js'
 
 const LEVEL_LABEL = { L: '低', M: '中', H: '高' }
 const LEVEL_CLASS = { L: 'level-low', M: 'level-mid', H: 'level-high' }
@@ -21,6 +22,14 @@ export function renderResult(result, userLevels, dimOrder, dimDefs, config) {
   // 主类型
   document.getElementById('result-code').textContent = primary.code
   document.getElementById('result-name').textContent = primary.cn
+
+  const personaVisual = getPersonaVisual(primary.code)
+  const artWrap = document.getElementById('result-art')
+  const artImage = document.getElementById('result-art-image')
+  artWrap.dataset.persona = primary.code
+  artWrap.classList.toggle('result-art-featured', primary.code === 'SEXY')
+  artImage.src = personaVisual.image
+  artImage.alt = personaVisual.alt
 
   // 匹配度
   document.getElementById('result-badge').textContent =
